@@ -1,0 +1,17 @@
+2.11.
+  - genauere Darstellung wie Stan genau berechnet
+  - angewandter: wie und in welchem Format wird gespeichert?
+  - neben stan_model() + sampling() auch noch stan() zeigen
+  - Erster Beispiel live durchrechnen + Code zur Verfügung stellen                    [DONE]
+  - Hilfsfunktionen schreiben um Workflow zu beschleunigen (+ Hilfe für Isabella)
+  - vorher schon sampling statements beschreiben?                                     [nein]
+
+3.11.
+  - eigenes MCMC gif machen (HMC!)
+
+6.11.
+  - Datenbeispiel splitten auf Erwachsene (Übung 2) und Total (Übung 3)               [DONE]
+
+9.11.
+  - logistische Regression Datensatz aufbereiten (Titanic)
+    Soll hier kreuzvalidiert werden?
