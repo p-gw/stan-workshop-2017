@@ -451,6 +451,40 @@ generated quantities {}
 real x = normal_rng(real mu, real sigma)
 </code></pre>
         </section>
+
+        <section>
+          <h2>logistische Regression</h2>
+        </section>
+
+        <section data-background-image="images/toytanic.gif">
+          <h3>Anwendungsbeispiel</h3>
+          <h4>Überleben auf der Titanic</h4>
+        </section>
+
+        <section id="ue-04">
+          <h3>Übung 04</h3>
+          <h4>logistische Regression</h4>
+          <p style="font-size: 0.75em;">Verwende die Datensätze <i>titanic_training.csv</i> und <i>titanic_test.csv</i> um folgende Fragestellungen zu beantworten:</p>
+          <ol style="font-size: 0.75em;">
+            <li><strong>[R, rstan, Stan]</strong> <i>Frauen und Kinder zuerst!</i></br>Überprüfe anhand des Trainingdatensatzes, ob die geschätzte Überlebenswahrscheinlichkeit für Frauen und Kinder tatsächlich höher als für Männer ist.</li>
+            <li><strong>[R, rstan, Stan]</strong> Verwende die posterior predictive distribution um Überlebenswahrscheinlichkeiten für Personen im Testdatensatz zu bestimmen und diese als überlebende oder nicht überlebende Person zu klassifizieren.</li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>Übung 04</h3>
+          <h4>neue Funktionen</h4>
+          <pre style="box-shadow: none;"><code class="stan">
+# 1.
+int y ~ bernoulli(real inv_logit(x)) // oder besser
+int y ~ bernoulli_logit(real x)
+
+# 2.
+real y = inv_logit(real x)
+int  y = bernoulli_rng(real x) // x zwischen 0 und 1
+int  y = bernoulli_logit_rng(real x)
+</code></pre>
+        </section>
 			</div>
 		</div>
 
