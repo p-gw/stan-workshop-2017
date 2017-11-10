@@ -60,7 +60,7 @@ p_sim <- p + geom_path(data = fitted, aes(x = x_tilde, y = value, group = variab
 
 
 #
-hdi <- c(.1, .9)
+hdi <- c(.025, .975)
 
 pred <- posterior_samples$p_tilde
 pred <- apply(pred, 2, function(x) c(mean(x), quantile(x, hdi)))
