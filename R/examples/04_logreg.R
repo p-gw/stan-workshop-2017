@@ -8,27 +8,29 @@ rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
 # Datensätze laden
-d_train <- fread("data/titanic_training.csv")
-d_test  <- fread("data/titanic_test.csv")
+d_train <- fread("data/titanic_training_new.csv")
+d_test  <- fread("data/titanic_test_new.csv")
 
 # Stan Datensatz
 stan_data <- list(
-  "N"      = nrow(d_train),
-  "y"      = d_train$survived,
-  "pclass"  = d_train$class - 1,
-  "female" = d_train$female,
-  "age"    = d_train$age
+  "N" = nrow(d_train),
+  "y" = d_train$survived,
+  "X" = model.matrix(survived ~ factor(pclass)*female*I(age - mean(age)), data = d_train),
+  "N_tilde" = nrow(d_test),
+  "X_tilde" = model.matrix(survived ~ factor(pclass)*female*I(age - mean(age)), data = d_test)
 )
 
-X_tilde <- expand.grid(seq(0, 80, length.out = 100), 0:1, 0:2)
-
-stan_data$N_tilde <- nrow(X_tilde)
-stan_data$age_tilde <- X_tilde[, 1]
-stan_data$female_tilde <- X_tilde[, 2]
-stan_data$pclass_tilde <- X_tilde[, 3]
+stan_data$k <- ncol(stan_data$X)
 
 # Model fitten
 stan_fit <- stan("models/0401_logreg.stan", data = stan_data)
+
+# predtest
+y_pred <- extract(stan_fit, "y_tilde")$y_tilde
+
+res[, "prediction" := apply(y_pred, 2, median)]
+
+res[, mean(survived == prediction)] #.7799, .789, .799
 
 # Darstellung
 n_samp <- 40
@@ -67,7 +69,7 @@ pred <- apply(pred, 2, function(x) c(mean(x), quantile(x, hdi)))
 
 pd_quant <- data.frame(
   t(pred),
-  "age" = stan_data$age_tilde,
+  "age" = stan_data$age_tilde + mean(d_train$age),
   "female" = stan_data$female_tilde,
   "class" = stan_data$pclass_tilde
 )
