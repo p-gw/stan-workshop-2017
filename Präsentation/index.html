@@ -470,6 +470,30 @@ real x = normal_rng(real mu, real sigma)
           <h2>logistische Regression</h2>
         </section>
 
+        <section>
+          <h3>Inhaltliche Überlegungen</h3>
+          <p>$\boldsymbol{y} \sim \mathrm{Bernoulli}(\boldsymbol{\theta}) \qquad i = 1,\ldots,N$</pi>
+          <p>$\boldsymbol{\theta} = \mathrm{logit}^{-1}(\boldsymbol{X\beta}) = \frac{\exp({\boldsymbol{X\beta})}}{1 + \exp({\boldsymbol{X\beta})}}$</p>
+          <p>$\boldsymbol{\beta} \sim \ldots$
+
+          <aside class="notes">
+            <p>Prior von beta wie in der linearen Regression!</p>
+          </aside>
+        </section>
+
+        <section>
+          <h3>Einschub: generische Prior Verteilungen</h3>
+          <ol>
+            <li>Skaliere kontinuierliche Prädiktoren:</br>$\mathrm{mean}(x) = 0$, $\mathrm{sd}(x) = 0.5$ </li>
+            <li>Wähle eine wenig informative Prior Verteilung:</br>(z.b.) $\mathrm{Cauchy}(0, 2.5), \qquad \mathrm{t}_{\nu}(0, 2.5)$</li>
+          </ol>
+          <p>Genauere Erläuterungen <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations" target="_blank">hier.</a></p>
+
+          <aside class="notes">
+            <p><strong>ad 1.</strong> Damit Skala etwa der von dummy-kodierten Variablen entspricht</p>
+          </aside>
+        </section>
+
         <section data-background-image="images/toytanic.gif">
           <h3>Anwendungsbeispiel</h3>
           <h4>Überleben auf der Titanic</h4>
@@ -498,6 +522,29 @@ real y = inv_logit(real x)
 int  y = bernoulli_rng(real x) // x zwischen 0 und 1
 int  y = bernoulli_logit_rng(real x)
 </code></pre>
+        </section>
+
+        <section>
+          <h2>hierarchische Modelle</h2>
+        </section>
+
+        <section>
+          <h3>Anwendungsbeispiel</h3>
+          <h4>8 schools</h4>
+          <img src="images/05_8schools.png" width="75%" class="plain"></img>
+        </section>
+
+        <section id="ue-05">
+          <h3>Übung 05</h3>
+          <h4>Hierarchische Modelle</h4>
+
+          <ol>
+            <li>complete pooling</li>
+            <li>no pooling</li>
+            <li>partial pooling + diagnostics (centered)</li>
+            <li>partial pooling + diagnostics (non-centered)</li>
+            <li>ppmc mit Teststatistiken</li>
+          </ol>
         </section>
 			</div>
 		</div>
