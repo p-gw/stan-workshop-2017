@@ -86,6 +86,14 @@
             <li>Quadratische Approximation <i class="fragment fa fa-close" style="color: red;"></i></li>
             <li>Markov Chain Monte Carlo <i class="fragment fa fa-check" style="color: green;"></i></li>
           </ol>
+          <aside class="notes">
+            <p>
+              <strong>ad 1.</strong> Begrenzte Modellwahl und oft abhängig von konjugierten Priors</br>
+              <strong>ad 2.</strong> Skaliert schlecht mit der Anzahl der Dimensionen; sehr rechenintensiv!</br>
+              <strong>ad 3.</strong> Nimmt normalverteilte Posterior an</br>
+              <strong>ad 4.</strong> Variable Wahl von Prior und Posterior; rechenintensiv
+            </p>
+          </aside>
         </section>
 
         <section>
@@ -415,6 +423,12 @@ poly(..., degree = ...)
           <ol>
             <li>Ziehen der Parameter $(\boldsymbol{\beta}^{(i)}, \sigma^{(i)})$ aus der Posterior, $i = 1, \ldots, K$ der Index der MCMC-Iteration</li>
             <li>simuliere $\tilde{\boldsymbol{y}}|\boldsymbol{\beta}^{(i)}, \sigma^{(i)} \sim \mathrm{Normal}(\tilde{\boldsymbol{X}}\boldsymbol{\beta}^{(i)}, \sigma^{(i)})$ </li>
+            <li>Verwendung von $\tilde{\boldsymbol{y}}$ zur Modellevaluation:
+              <ul>
+                <li>Darstellung der PPD,</li>
+                <li>Berechnung und Gegenüberstellung von Teststatistiken $T(\tilde{\boldsymbol{y}})$ und $T(\boldsymbol{y})$.</br>(grafisch oder posterior predictive p-values)</li>
+              </ul>
+            </li>
           </ol>
         </section>
 
@@ -429,7 +443,7 @@ poly(..., degree = ...)
           <h3>Übung 03 (B)</h3>
           <h4>Posterior Predictions</h4>
           <ol style="font-size: 0.75em;">
-            <li><strong>[R]</strong>Simuliere die posterior predictive distribution für eine Person mit beliebigem Gewicht. Verwende dazu die posterior samples aus Übung 03 (A).</li>
+            <li><strong>[R]</strong> Simuliere die posterior predictive distribution für eine Person mit beliebigem Gewicht. Verwende dazu die posterior samples aus Übung 03 (A).</li>
             <li><strong>[R]</strong> Definiere eine neue Variable $\tilde{\boldsymbol{x}}$ der Länge $\tilde{N}$ = 200, die den gesamten Wertebereich von <i>weight</i> abdeckt.</li>
             <li><strong>[Stan]</strong> Adaptiere das Modell aus Übung 03 (A) so, dass für $\tilde{N}$ neue Personen mit Gewicht $\tilde{x}_i$ neue Werte $\tilde{y}_i$ aus der posterior predictive distribution simuliert werden. Berechne dann das Modell neu.</li>
             <li><strong>[rstan, R]</strong> Stelle die PPD in Form eines Konfidenzbandes dar. Worin unterscheidet sich die Grafik zur Darstellung in Übung 02 4. (2)?</li>
@@ -467,7 +481,7 @@ real x = normal_rng(real mu, real sigma)
           <p style="font-size: 0.75em;">Verwende die Datensätze <i>titanic_training.csv</i> und <i>titanic_test.csv</i> um folgende Fragestellungen zu beantworten:</p>
           <ol style="font-size: 0.75em;">
             <li><strong>[R, rstan, Stan]</strong> <i>Frauen und Kinder zuerst!</i></br>Überprüfe anhand des Trainingdatensatzes, ob die geschätzte Überlebenswahrscheinlichkeit für Frauen und Kinder tatsächlich höher als für Männer ist.</li>
-            <li><strong>[R, rstan, Stan]</strong> Verwende die posterior predictive distribution um Überlebenswahrscheinlichkeiten für Personen im Testdatensatz zu bestimmen und diese als überlebende oder nicht überlebende Person zu klassifizieren.</li>
+            <li><strong>[R, rstan, Stan]</strong> Simuliere Werte aus der posterior predictive distribution um Überlebenswahrscheinlichkeiten für Personen im Testdatensatz zu bestimmen und diese als überlebende oder nicht überlebende Person zu klassifizieren.</li>
           </ol>
         </section>
 
