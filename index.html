@@ -470,6 +470,30 @@ real x = normal_rng(real mu, real sigma)
           <h2>logistische Regression</h2>
         </section>
 
+        <section>
+          <h3>Inhaltliche Überlegungen</h3>
+          <p>$\boldsymbol{y} \sim \mathrm{Bernoulli}(\boldsymbol{\theta}) \qquad i = 1,\ldots,N$</pi>
+          <p>$\boldsymbol{\theta} = \mathrm{logit}^{-1}(\boldsymbol{X\beta}) = \frac{\exp({\boldsymbol{X\beta})}}{1 + \exp({\boldsymbol{X\beta})}}$</p>
+          <p>$\boldsymbol{\beta} \sim \ldots$
+
+          <aside class="notes">
+            <p>Prior von beta wie in der linearen Regression!</p>
+          </aside>
+        </section>
+
+        <section>
+          <h3>Einschub: generische Prior Verteilungen</h3>
+          <ol>
+            <li>Skaliere kontinuierliche Prädiktoren:</br>$\mathrm{mean}(x) = 0$, $\mathrm{sd}(x) = 0.5$ </li>
+            <li>Wähle eine wenig informative Prior Verteilung:</br>(z.b.) $\mathrm{Cauchy}(0, 2.5), \qquad \mathrm{t}_{\nu}(0, 2.5)$</li>
+          </ol>
+          <p>Genauere Erläuterungen <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations" target="_blank">hier.</a></p>
+
+          <aside class="notes">
+            <p><strong>ad 1.</strong> Damit Skala etwa der von dummy-kodierten Variablen entspricht</p>
+          </aside>
+        </section>
+
         <section data-background-image="images/toytanic.gif">
           <h3>Anwendungsbeispiel</h3>
           <h4>Überleben auf der Titanic</h4>
@@ -498,6 +522,97 @@ real y = inv_logit(real x)
 int  y = bernoulli_rng(real x) // x zwischen 0 und 1
 int  y = bernoulli_logit_rng(real x)
 </code></pre>
+        </section>
+
+        <section>
+          <h2>hierarchische Modelle</h2>
+        </section>
+
+        <section>
+          <h3>Anwendungsbeispiel</h3>
+          <h4>8 schools (bayesianische Metaanalyse)</h4>
+          <img src="images/05_8schools.png" width="75%" class="plain"></img>
+        </section>
+
+        <section id="ue-05">
+          <h3>Übung 05 (A)</h3>
+          <h4>Hierarchische Modelle</h4>
+          <ol style="font-size: 0.75em;">
+            <li><strong>[Stan, rstan]</strong> Schätze den durchschnittlichen Effekt aller Schulen unter der Annahme, dass die Effekte der Interventionen normalverteilt ist (<i>complete pooling</i>) und simuliere die vorhergesagten Effekte für jede Schule aus der PPD.</li>
+            <li><strong>[Stan, rstan]</strong> Schätze den Effekt für jede Schule getrennt unter identischen Verteilungsannahmen (<i>no pooling</i>) und simuliere die vorhergesagten Effekte für jede Schule aus der PPD.</li>
+            <li><strong>[R]</strong> Optional: Stelle die vorhergesagten Effekte grafisch dar.</li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>Einschub I: Modelldiagnose</h3>
+          <p>noch ausständig...</p>
+          <p><a href="http://mc-stan.org/users/documentation/case-studies/divergences_and_bias.html" target="_blank">hier</a></p>
+        </section>
+
+        <section>
+          <h3>Einschub II: Parametrisierung</h3>
+          <h4>zentriert vs. nicht-zentriert</h4>
+          <pre style="box-shadow: none;"><code class="stan" data-noescape><span class="fragment"># zentriert
+model {
+  theta ~ normal(mu, sigma_theta); # prior für theta
+  y ~ normal(theta, sigma);
+}</span><span class="fragment">
+# nicht-zentriert
+transformed parameters {
+  vector theta_norm;
+  theta = theta_norm*sigma_theta + mu;
+}
+model {
+  theta_norm ~ normal(0, 1);  # prior für theta_norm
+  y ~ normal(theta, sigma);
+}</span>
+</code></pre>
+        </section>
+
+        <section>
+          <h3>Inhaltliche Überlegungen</h3>
+          <h4>Zentrierte Parametrisierung</h4>
+          <p>$y_i \sim \mathrm{Normal}(\theta_i, \sigma_i), \qquad i = 1,\ldots,N$</p>
+          <p>$\theta_i \sim \mathrm{Normal}(\mu, \tau)$</p>
+          <p>$\mu \sim \mathrm{Normal}(0, 10)$</p>
+          <p>$\tau \sim \mathrm{Cauchy}_+(0, 5)$</p>
+        </section>
+
+        <section>
+          <h3>Inhaltliche Überlegungen</h3>
+          <h4>nicht-zentrierte Parametrisierung</h4>
+          <p>$y_i \sim \mathrm{Normal}(\theta_i, \sigma_i), \qquad i = 1,\ldots,N$</p>
+          <p>$\tilde{\theta}_i \sim \mathrm{Normal}(0, 1), \qquad \theta_i = \tilde{\theta}_i\tau + \mu$</p>
+          <p>$\mu \sim \mathrm{Normal}(0, 10)$</p>
+          <p>$\tau \sim \mathrm{Cauchy}_+(0, 5)$</p>
+        </section>
+
+        <section>
+          <h3>Übung 05 (B)</h3>
+          <h4>Hierarchische Modelle</h4>
+          <ol style="font-size: 0.75em;">
+            <li><strong>[Stan, rstan, shinystan]</strong> Schätze das hierarchische Modell mit Hilfe der zentrierten Parametrisierung und untersuche die divergenten Iterationen mit shinystan (tab DIAGNOSE). Betrachte dazu insbesondere den hierarchischen Varianzparameter $\tau$.</li>
+            <li><strong>[Stan, rstan, shinystan]</strong> Schätze das Modell mit nicht-zentrierter Parametrisierung. Wie verändern sich die divergenten Iterationen und die effektive Stichprobengröße der Modellparameter?</li>
+            <li><strong>[R, rstan]</strong> Wie groß ist die Wahrscheinlichkeit, dass die durchgeführte Interventionen im Mittel einen positiven Effekt auf die Testleistung der Schüler hat?</li>
+            <li><strong>[R, rstan]</strong> Berechne die PPD für die maximale Punkteanzahl der 8 Schulen. Wie plausibel ist es, dass ein Effekt größer 30 Punkten auftritt?</li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>Übung 05 (B)</h3>
+          <h4>neue Funktionen</h4>
+          <pre style="box-shadow: none;"><code class="stan" data-noescape>
+# 1., 2.
+shinystan::launch_shinystan()
+</code></pre>
+        </section>
+
+        <section>
+          <h3>Abschließende Anmerkungen</h3>
+          <h4>R Pakete</h4>
+          <p>Viele bayesianische Modelle (z.b. GLMs) können direkt in R in lm bzw. lme4 Syntax angepasst werden!</p>
+          <p style="font-size: 0.75em;">Pakete: rstanarm (<a href="https://github.com/stan-dev/rstanarm" target="_blank">link</a>), brms (<a href="https://github.com/paul-buerkner/brms" target="_blank">link</a>), ...</p>
         </section>
 			</div>
 		</div>
