@@ -17,7 +17,7 @@ stan_data <- list(
   "y" = d_train$survived,
   "X" = model.matrix(survived ~ factor(pclass)*female*I(age - mean(age)), data = d_train),
   "N_tilde" = nrow(d_test),
-  "X_tilde" = model.matrix(survived ~ factor(pclass)*female*I(age - mean(age)), data = d_test)
+  "X_tilde" = model.matrix( ~ factor(pclass)*female*I(age - mean(age)), data = d_test)
 )
 
 stan_data$k <- ncol(stan_data$X)
@@ -59,7 +59,6 @@ p <- ggplot(data = d_train, aes(x = age, y = survived)) +
   theme_minimal()
 
 p_sim <- p + geom_path(data = fitted, aes(x = x_tilde, y = value, group = variable), colour = "#9C27B0")
-
 
 #
 hdi <- c(.025, .975)
