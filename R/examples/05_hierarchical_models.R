@@ -17,6 +17,7 @@ stan_data <- list(
   "sigma"  = d[, sd]
 )
 
+# 05 (A)
 # complete pooling model
 fit_cp <- stan("models/0501_complete_pooling.stan", data = stan_data)
 
@@ -51,6 +52,7 @@ names(y_rep_np) <- c("school", "mean", "lwr", "upr")
 
 p_np <- p + geom_linerange(data = y_rep_np, aes(x = school, y = mean, ymin = lwr, ymax = upr))
 
+# 05 (B)
 # partial pooling model (centered)
 fit_ppc <- stan("models/0503_partial_pooling_central.stan", data = stan_data)
 
@@ -78,3 +80,20 @@ y_rep_ppnc <- data.table(
 names(y_rep_ppnc) <- c("school", "mean", "lwr", "upr")
 
 p_ppnc <- p + geom_linerange(data = y_rep_ppnc, aes(x = school, y = mean, ymin = lwr, ymax = upr))
+
+# 3.
+post <- extract(fit_ppnc)
+
+mean(post$mu > 0)     # .952
+mean(post$y_rep > 0)  # .718
+
+# 4.
+y_max <- apply(post$y_rep, 1, max)
+
+p_max <- ggplot(data.table("max" = y_max), aes(x = max)) +
+  geom_density(colour = "#FF9800", fill = "#FFB74D", alpha = 0.2, adjust = 1/3) +
+  geom_vline(xintercept = 30, size = 1, colour = "#0288D1") +
+  annotate("text", x = 45, y = 0.042, label = paste0("P(max > 30) = ", round(mean(y_max > 30), 3))) +
+  theme_minimal()
+
+print(p_max)
