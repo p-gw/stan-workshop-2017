@@ -15,9 +15,9 @@ d_test  <- fread("data/titanic_test_new.csv")
 stan_data <- list(
   "N" = nrow(d_train),
   "y" = d_train$survived,
-  "X" = model.matrix(survived ~ factor(pclass)*female*I(age - mean(age)), data = d_train),
+  "X" = model.matrix(survived ~ factor(pclass)*age + factor(pclass)*female, data = d_train),
   "N_tilde" = nrow(d_test),
-  "X_tilde" = model.matrix( ~ factor(pclass)*female*I(age - mean(age)), data = d_test)
+  "X_tilde" = model.matrix( ~ factor(pclass)*age + factor(pclass)*female, data = d_test)
 )
 
 stan_data$k <- ncol(stan_data$X)
@@ -25,55 +25,39 @@ stan_data$k <- ncol(stan_data$X)
 # Model fitten
 stan_fit <- stan("models/0401_logreg.stan", data = stan_data)
 
-# predtest
-y_pred <- extract(stan_fit, "y_tilde")$y_tilde
+# PPD
+## Überlebenswahrscheinlichkeiten
+hdi <- c(0.25, 0.75)
 
-res[, "prediction" := apply(y_pred, 2, median)]
+p_pred <- extract(stan_fit, "p_tilde")$p_tilde
+p_pred <- apply(p_pred, 2, function(x) c(mean(x), quantile(x, hdi)))
+p_pred <- data.table(t(p_pred), 1:ncol(p_pred))
 
-res[, mean(survived == prediction)] #.7799, .789, .799
+names(p_pred) <- c("mean", "lwr", "upr", "ID")
 
-# Darstellung
-n_samp <- 40
-samples <- sample(4000, n_samp)
+p_pred[order(mean, decreasing = FALSE), "rank" := 1:.N]  # Sortierung für Plot
 
-posterior_samples <- extract(stan_fit)
-
-pd <- data.table(
-  "sample" = samples,
-  "alpha" = posterior_samples$alpha[samples],
-  "b_age" = posterior_samples$beta[samples, 3]
-)
-
-fitted <- data.table(
-  "x_tilde" = seq(0, 80, length.out = 200)
-)
-
-for (i in 1:length(samples)) {
-  fitted[, paste0("y_hat", i)] <- plogis(pd$alpha[i] + pd$b_age[i]*fitted$x_tilde)
-}
-
-fitted <- melt(fitted, id.vars = "x_tilde")
-
-p <- ggplot(data = d_train, aes(x = age, y = survived)) +
-  geom_jitter(shape = 21, colour = "#424242", height = 0, width = 1/3) +
+### Darstellung
+p_surv <- ggplot(p_pred, aes(x = rank, ymin = lwr, ymax = upr)) +
+  geom_linerange(size = 1, colour = "#6D4C41") +
+  coord_flip() +
   theme_minimal()
 
-p_sim <- p + geom_path(data = fitted, aes(x = x_tilde, y = value, group = variable), colour = "#9C27B0")
+print(p_surv)
 
-#
-hdi <- c(.025, .975)
+## Klassifizierung
+y_pred <- extract(stan_fit, "y_tilde")$y_tilde
 
-pred <- posterior_samples$p_tilde
-pred <- apply(pred, 2, function(x) c(mean(x), quantile(x, hdi)))
+p_pred[, "prediction" := apply(y_pred, 2, median)]
+p_pred[, "prediction" := factor(prediction)]
 
-pd_quant <- data.frame(
-  t(pred),
-  "age" = stan_data$age_tilde + mean(d_train$age),
-  "female" = stan_data$female_tilde,
-  "class" = stan_data$pclass_tilde
-)
+p_class <- ggplot(p_pred, aes(x = rank, ymin = lwr, ymax = upr)) +
+  geom_linerange(size = 1, aes(colour = prediction)) +
+  scale_colour_manual(values = c("#FF5722", "#2196F3")) +
+  coord_flip() +
+  theme_minimal()
 
-names(pd_quant) <- c("mean", "lwr", "upr", "age", "female", "class")
+print(p_class)
 
-p_quant <- p + geom_ribbon(data = pd_quant, aes(x = age, ymin = lwr, ymax = upr, y = mean), fill = "#BDBDBD", alpha = 0.6) +
-  geom_line(data = pd_quant, aes(x = age, y = mean), colour = "#00BCD4", size = 1) + facet_grid(female ~ class)
+# Zusatz: Abgleich mit Beobachtungen
+d_val <- fread("data/titanic_solution.csv")
