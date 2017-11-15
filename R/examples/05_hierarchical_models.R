@@ -1,6 +1,7 @@
 # Pakete laden
 library(ggplot2)
 library(rstan)
+library(shinystan)
 library(data.table)
 
 # Multithreading aktivieren
@@ -33,10 +34,12 @@ y_rep_cp <- data.table(
 names(y_rep_cp) <- c("school", "mean", "lwr", "upr")
 
 p <- ggplot(d, aes(x = school, y = treatment_effect)) +
-  geom_point() +
+  geom_point(size = 3, colour = "#455A64", shape = 21) +
   theme_minimal()
+print(p)
 
-p_cp <- p + geom_linerange(data = y_rep_cp, aes(x = school, y = mean, ymin = lwr, ymax = upr))
+p_cp <- p + geom_linerange(data = y_rep_cp, aes(x = school, y = mean, ymin = lwr, ymax = upr), size = 1, colour = "#78909C")
+print(p_cp)
 
 # no pooling model
 fit_np <- stan("models/0502_no_pooling.stan", data = stan_data)
@@ -50,22 +53,14 @@ y_rep_np <- data.table(
 
 names(y_rep_np) <- c("school", "mean", "lwr", "upr")
 
-p_np <- p + geom_linerange(data = y_rep_np, aes(x = school, y = mean, ymin = lwr, ymax = upr))
+p_np <- p + geom_linerange(data = y_rep_np, aes(x = school, y = mean, ymin = lwr, ymax = upr), size = 1, colour = "#78909C")
+print(p_np)
 
 # 05 (B)
 # partial pooling model (centered)
 fit_ppc <- stan("models/0503_partial_pooling_central.stan", data = stan_data)
 
-y_rep_ppc <- extract(fit_ppc, "y_rep")$y_rep
-y_rep_ppc <- apply(y_rep_ppc, 2, function(x) c(mean(x), quantile(x, hdi)))
-y_rep_ppc <- data.table(
-  d[, school],
-  t(y_rep_ppc)
-)
-
-names(y_rep_ppc) <- c("school", "mean", "lwr", "upr")
-
-p_ppc <- p + geom_linerange(data = y_rep_ppc, aes(x = school, y = mean, ymin = lwr, ymax = upr))
+launch_shinystan(fit_ppc)
 
 # partial pooling model (non-centered)
 fit_ppnc <- stan("models/0504_partial_pooling_noncentral.stan", data = stan_data)
@@ -79,7 +74,8 @@ y_rep_ppnc <- data.table(
 
 names(y_rep_ppnc) <- c("school", "mean", "lwr", "upr")
 
-p_ppnc <- p + geom_linerange(data = y_rep_ppnc, aes(x = school, y = mean, ymin = lwr, ymax = upr))
+p_pp <- p + geom_linerange(data = y_rep_ppnc, aes(x = school, y = mean, ymin = lwr, ymax = upr), size = 1, colour = "#78909C")
+print(p_pp)
 
 # 3.
 post <- extract(fit_ppnc)
