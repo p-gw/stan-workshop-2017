@@ -55,7 +55,8 @@ p_class <- ggplot(p_pred, aes(x = rank, ymin = lwr, ymax = upr)) +
   geom_linerange(size = 1, aes(colour = prediction)) +
   scale_colour_manual(values = c("#FF5722", "#2196F3")) +
   coord_flip() +
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.justification = c(0, 1), legend.position = c(0, 1))
 
 print(p_class)
 
