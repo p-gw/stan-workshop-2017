@@ -1,0 +1,638 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>reveal.js</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/white.css">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/github-gist.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+          <h2>Workshop: Einführung in Stan und rstan</h2>
+          <p>Philipp Gewessler</p>
+          <p style="font-size: 0.85em;"><a href="https://github.com/p-gw/" target="_blank"><i class="fa fa-github"></i></a> <a href="mailto:philipp.gewessler@bmb.gv.at" style="margin-left: 20px;"><i class="fa fa-envelope" aria-hidden="true"></i></a></p>
+        </section>
+        <section>
+          <h3>Inhalte des Workshops</h3>
+          <h4>theoretischer Teil</h4>
+          <ol>
+            <li>Grundlagen bayesianischer Inferenz</li>
+            <li>Stan Grundlagen</li>
+            <li>Schnittstelle von R und Stan: rstan</li>
+            <li>Erstes Anwendungsbeispiel</li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>Inhalte des Workshops</h3>
+          <h4>praktischer Teil</h4>
+          <ol>
+            <li><strong><a href="#/ue-01">[Übung 01]</a></strong> Normalverteilungsmodell</li>
+            <li><strong><a href="#/ue-02">[Übung 02]</a></strong> einfache lineare Regression</li>
+            <li><strong><a href="#/ue-03">[Übung 03]</a></strong> multiple lineare Regression</li>
+            <li><strong><a href="#/ue-04">[Übung 04]</a></strong> logistische Regression</li>
+            <li><strong><a href="#/ue-05">[Übung 05]</a></strong> hierarchische lineare Modelle</li>
+          </ol>
+        </section>
+
+        <section>
+          <h2>Bayesianische Inferenz</h2>
+          <img src="images/bayesplot.png" width="60%" class="plain"></img>
+        </section>
+
+        <section>
+          <h3>Bayesianischer Wahrscheinlichkeitsbegriff</h3>
+          <a href="http://jimbeck.caltech.edu/summerlectures/references/ProbabilityFrequencyReasonableExpectation.pdf" target="_blank"><img src="images/cox_1946.png" width="60%" class="plain"></img></a>
+          <p class="fragment">Generalisierung von Logik auf unsichere Ereignisse</p>
+          <p class="fragment">Wahrscheinlichkeit als Plausibilität (= Information) über Ereignisse</p>
+
+          <aside class="notes">
+            <p>Wahrscheinlichkeit ist <u>kein</u> Grenzwert einer relativen Häufigkeit!</p>
+          </aside>
+        </section>
+
+        <section>
+          <h3>Bayes Theorem</h3>
+          <p>Berechnung der Posterior $p(\boldsymbol{\theta}|\boldsymbol{y},I)$ gegeben</br>Prior $p(\boldsymbol{\theta}|I)$ und Likelihood $p(\boldsymbol{y}|\boldsymbol{\theta},I)$</p></br>
+          <p>$p(\boldsymbol{\theta}|\boldsymbol{y},I) = \frac{p(\boldsymbol{\theta}|I)p(\boldsymbol{y}|\boldsymbol{\theta},I)}{p(\boldsymbol{y})}$</p>
+
+          <aside class="notes">
+            <p>p(<strong>y</strong>) = average likelihood unabhängig von theta. (-> Normalisierungskonstante)</p>
+          </aside>
+        </section>
+
+        <section>
+          <h2>Stan Grundlagen</h2>
+        </section>
+        <section>
+          <h3>Was ist Stan?</h3>
+          <div style="float: left; width: 65%">
+            <ul>
+              <li>probabilistische Programmiersprache</li>
+              <li>Berechnung bayesianischer Modelle via Markov Chain Monte Carlo (Hamiltonian MC)</li>
+              <li>basiert auf C++ (schnell!)</li>
+            </ul>
+          </div>
+          <div style="float: right; width: 35%;">
+            <a href="https://en.wikipedia.org/wiki/Stanislaw_Ulam" target="_blank"><img src="images/stan_ulam.jpg" width="55%" class="plain"></img></a>
+            <a href="http://hedibert.org/wp-content/uploads/2013/12/1949MetropolisUlam.pdf" target="_blank"><img src="images/metropolis_1949.png" width="100%" class="plain"></img></a>
+          </div>
+        </section>
+
+        <section>
+          <h3>Markov Chain Monte Carlo</h3>
+          <img src="images/mh_animation.gif" width="100%" class="plain"></img>
+        </section>
+
+
+        <section>
+          <h3>Stan Workflow</h3>
+          <ol>
+            <li>Modell spezifizieren</li>
+            <li>Modell kompilieren</li>
+            <li>Posterior berechnen</li>
+            <li>Modelldiagnose</li>
+            <li>Analyse der Posterior | Ergebnisinterpretation</li>
+          </ol>
+
+          <aside class="notes">
+            <p>
+              <strong>ad 1.</strong> Empfohlen ein eigenes *.stan file anzulegen</br>
+              <strong>ad 2.</strong> Stan -> C++; einmaliges ausführen so lange nichts am Modell verändert wird.
+            </p>
+          </aside>
+        </section>
+
+				<section>
+          <h3>Erforderliche Code Blöcke</h3>
+          <pre style="box-shadow: none;"><code class="stan" data-noescape>
+<span class="fragment">data {
+  // Hier sind die übergebenen Daten zu deklarieren
+}</span>
+<span class="fragment">
+parameters {
+  // Hier sind die Modellparameter zu deklarieren
+}</span>
+<span class="fragment">
+model {
+  // Hier sind das Modell (inkl. Priors) zu definieren
+}</span>
+          </code></pre>
+        </section>
+        <section>
+          <h3>Optionale Code Blöcke</h3>
+          <pre style="box-shadow: none;"><code class="stan" data-noescape>
+<span class="fragment">transformed data {
+  // Definitionen von transformierten Daten
+}</span>
+<span class="fragment">
+transformed parameters {
+  // Definition von Parametertransformationen
+}</span>
+<span class="fragment">
+generated quantities {
+  // Zusätzlich berechnete Variablen
+}</span>
+          </code></pre>
+        </section>
+        <section>
+          <h3>Variablentypen [1|2]</h3>
+          Typen müssen in Stan <strong>immer</strong> deklariert werden!
+          <pre style="box-shadow: none;"><code class="stan" data-noescape>
+  // primitive types
+  int N;
+  real p;
+
+  // vector | matrix types
+  vector[M] x;
+  row_vector[N] y;
+  matrix[M,N] z;
+          </code></pre>
+        </section>
+        <section>
+          <h3>Variablentypen [2|2]</h3>
+          <pre style="box-shadow: none;"><code class="stan" data-noescape>
+  // array types
+  real p[20];
+  matrix[3,3] a[2,5];
+
+  // constrained types
+  int&lt;lower=1&gt; N;
+  real&lt;upper=0&gt; log_p;
+  real&lt;lower=0,upper=1&gt; p;
+          </code></pre>
+          und viele <a href="https://github.com/stan-dev/stan/releases/download/v2.16.0/stan-reference-2.16.0.pdf">mehr...</a>
+        </section>
+
+        <section>
+          <h2>Von R nach Stan</h2>
+        </section>
+        <section>
+          <h3>Ein Stan Modell berechnen</h3>
+          <pre style="box-shadow: none;"><code class="r">
+# Stan laden
+library(rstan)
+
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
+
+# Datenaufbereitung und Modellberechnung
+stan_data  <- list(...)
+stan_model <- stan_model("Mein_Modell.stan")
+stan_fit   <- sampling(object = stan_model, data = stan_data)
+
+print(stan_fit)
+          </code></pre>
+        </section>
+
+        <section>
+          <h2>Ein triviales Beispiel</h2>
+          <h3>Münzwurf</h3>
+        </section>
+
+        <section>
+          <h3>Inhaltliche Überlegungen</h3>
+          <p class="fragment">$p(\theta|\boldsymbol{y},I) \propto p(\theta|I)p(\boldsymbol{y}|\theta,I)$</p>
+          <p class="fragment">$y_i|\theta,I \sim \mathrm{Bernoulli(\theta)} \quad i = 1, \ldots, N$</p>
+          <p class="fragment">$\theta|I \sim \mathrm{Uniform}(0,1)$</p>
+        </section>
+
+        <section>
+          <h3>Definieren des Stan Programmes</h3>
+          <pre style="box-shadow: none;"><code class="stan" data-noescape>
+data {<span class="fragment">
+  int&lt;lower=1&gt; N;
+  int&lt;lower=0,upper=1&gt; y[N];</span>
+}
+parameters {<span class="fragment">
+  real&lt;lower=0,upper=1&gt; theta;</span>
+}
+model {<span class="fragment">
+  for (i in 1:N)
+    y[i] ~ bernoulli(theta);</span>
+}
+          </code></pre>
+        </section>
+
+        <section id="ue-01">
+          <h3>Übung 01</h3>
+          <h4>Normalverteilungsmodell mit unbekanntem Mittelwert und unbekannter Varianz</h4>
+          <ol style="font-size: 0.75em;">
+            <li><strong>[R]</strong> Generiere 100 Zufallszahlen aus einer Normalverteilung mit beliebigem $\mu$ und $\sigma$.
+            <li><strong>[Stan]</strong> Erstelle ein Stan Programm (<i>nv.stan</i>), das sowohl den Erwartungswert $\mu$, als auch die Standardabweichung $\sigma$ schätzt.
+            <li><strong>[R, rstan]</strong> Schätze das Modell und sieh dir die Parameterschätzungen an. Sind die wahren Parameter in den Posterior Intervallen enthalten?</li>
+            <li><strong>[R, rstan]</strong> Generiere Daten aus der gleichen Verteilung wie in 1. jedoch mit N >> 100 und N << 100. Wie ändert sich die Posterior Verteilung für $\mu$ und $\sigma$?</li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>Übung 01</h3>
+          <h4>Neue Funktionen</h4>
+          <pre style="box-shadow: none;"><code class="stan">
+x ~ normal(mu, sigma)                 // oder
+target += normal_lpdf(x | mu, sigma)
+          </code></pre>
+        </section>
+        <section>
+          <h2>einfache</br>lineare Regression</h2>
+        </section>
+
+        <section>
+          <h3>Inhaltliche Überlegungen</h3>
+          <p>$y_i \sim \mathrm{Normal}(\mu_i, \sigma)$</p>
+          <p>$\mu_i = \alpha + x_i\beta$</p>
+          <p>$(\alpha, \beta, \sigma) \sim \ldots$</p>
+        </section>
+
+        <section>
+          <h3>Wahl der Priors</h3>
+          <p><strong>Intercepts</strong></br>Im Allgemeinen wenig a priori Information, daher Verteilung mit großer Varianz</p>
+          <p><strong>Regressionskoeffizienten</strong></br>zentriert, mit geringer Wahrscheinlichkeitsmasse für 'extreme' Werte</p>
+          <p><strong>Residualvarianz</strong></br> Je nach Kontext leicht regularisierend</p>
+
+          <aside class="notes">
+            <p>Wenig a priori Information über Intercepts, u.A. auch weil sie abhängig von der Skalierung der y-Variable ist</p>
+            <p>Wahl der Priors abhängig vom Fachwissen!</p>
+          </aside>
+        </section>
+
+        <section>
+          <h3>Wahl des Priors für $\beta$</h3>
+          <h4>'Least Squares'</h4>
+          <p>$\mathrm{Uniform}(-\infty, \infty)$</p>
+          <img src="images/unif_prior.png" class="plain"></img>
+        </section>
+
+        <section>
+          <h3>Wahl des Priors für $\beta$</h3>
+          <h4>'Ridge Regression'</h4>
+          <p>$\mathrm{Normal}(0, \lambda)$</p>
+          <img src="images/normal_prior.png" class="plain"></img>
+        </section>
+
+        <section>
+          <h3>Wahl des Priors für $\beta$</h3>
+          <h4>'LASSO Regression'</h4>
+          <p>$\mathrm{Laplace}(0, \lambda)$</p>
+          <img src="images/laplace_prior.png" class="plain"></img>
+        </section>
+
+        <section>
+          <h3>Anwendungsbeispiel</h3>
+          <p>Zusammenhang von Größe und Gewicht der <i>!Kung</i></p>
+          <div>
+            <img src="images/linreg_data.png" width="65%" class="plain"></img>
+            <img src="images/kalahari.png" width="30%" class="plain" style="margin-left: 3%; margin-bottom: 12%;"></img>
+          </div>
+        </section>
+
+        <section id="ue-02">
+          <h3>Übung 02</h3>
+          <h4>einfache lineare Regression</h4>
+          <p style="font-size: 0.75em;">Führe mit dem Datensatz <code>heights.csv</code> folgende Analysen durch:</p>
+          <ol style="font-size: 0.75em;">
+            <li><strong>[R]</strong> Schätze die Regression von <i>weight</i> auf <i>height</i> mit OLS.</li>
+            <li><strong>[Stan]</strong> Programmiere die lineare Regression in Stan und verwende eine Gleichverteilung für $\beta$ und $\sigma$. Unterscheidet sich die Lösung von der OLS-Schätzung? Wenn ja, wie?</li>
+            <li><strong>[Stan]</strong> Wie 2. nur mit normalverteiltem Prior für $\alpha$ und $\beta$. Wähle verschiedene Varianzen für die Prior Verteilung von $\alpha$ bzw. $\beta$. Welche Auswirkungen hat die Wahl der Prior Varianz auf die Posterior?</li>
+            <li><strong>[rstan, R]</strong> Extrahiere die posterior samples für $\alpha$ und $\beta$. Stelle die Posterior auf 2 Arten dar:
+              <ol>
+                <li>klassisch in Form eines Konfidenzbandes,</li>
+                <li>durch posterior samples von Parameterkombinationen</li>
+              </ol>
+            </li>
+          </ol>
+          <aside class="notes">
+            <p>
+              <strong>ad 2.</strong> Hinweis geben, dass nur das Modell aus Übung 01 adaptiert werden muss.</br>
+              <strong>ad 3.</strong> Parameter a im <code>data{}</code> Block!</br>
+              <strong>ad 4.</strong> Essentiell ist das Arbeiten mit <code>extract()</code>; Zentral ist die Zusammenfassung der Posterior, <u>nicht</u> die Intervallgrenzen!</br>
+            </p>
+          </aside>
+        </section>
+
+        <section>
+          <h3>Übung 02 (Beispiel 4)</h3>
+          <h4>Neue Funktionen</h4>
+          <pre style="box-shadow: none;"><code class="r">
+rstan::extract()
+          </code></pre>
+          <div class="text-center">
+            <img src="images/0204_quant.png" width="33%" class="plain" style="margin-right: 10%;"></img>
+            <img src="images/0204_samp.png" width="33%" class="plain"></img>
+          </div>
+        </section>
+
+        <section>
+          <h3>multiple</br>lineare Regression</h3>
+        </section>
+
+        <section>
+          <h3>Inhaltliche Überlegungen</h3>
+          <p>$y_i \sim \mathrm{Normal}(\mu_i, \sigma)$</p>
+          <p>$\mu_i = \beta_0 + x_{i1}\beta_1 + x_{i2}\beta_2 + \ldots + x_{ik}\beta_k, \quad$ oder</p>
+          <p>$\boldsymbol{\mu} = \boldsymbol{X\beta}$</p>
+          <p>$(\boldsymbol{\beta}, \sigma) \sim \ldots$</p>
+        </section>
+
+        <section>
+          <h3>Anwendungsbeispiel</h3>
+          <h4>polynomiale Regression</h4>
+          <img src="images/03_polyreg.png" width="80%", class="plain"></img>
+        </section>
+
+        <section id="ue-03">
+          <h3>Übung 03 (A)</h3>
+          <h4>multiple lineare Regression</h4>
+          <p style="font-size: 0.75em;">Führe mit dem Datensatz <code>heights2.csv</code> folgende Analysen durch:</p>
+          <ol style="font-size: 0.75em;">
+            <li><strong>[Stan, rstan, R]</strong> Erstelle ein Stan Programm, dass eine polynomiale Regression 2. bzw. 3. Ordnung von <i>weight</i> auf <i>height</i> schätzt.</br> Definiere dazu erst einen transformierten Parameter $\mu_i = \beta_0 + x_{i}\beta_1 + x_{i}^2\beta_2 (+ x_i^3\beta_3)$</li>
+            <li><strong>[R, Stan]</strong> Generalisiere das Modell, indem du es in vektorisierter Form programmierst. Wie muss das Modell und die Datenstruktur angepasst werden, damit lineare Modelle mit beliebiger Anzahl von Prädiktoren geschätzt werden können?</li>
+            <li><strong>[rstan, R]</strong> Stelle die Unsicherheit der Regressionsparameter wie in Übung 02 mit Hilfe der posterior samples dar.</li>
+          </ol>
+
+          <aside class="notes">
+            <p>
+              <strong>ad 1. </strong> Regressionsinput standardisieren um numerische Stabilität zu erhöhen.</br>
+            </p>
+          </aside>
+        </section>
+
+        <section>
+          <h3>Übung 03 (A)</h3>
+          <h4>Neue Funktionen</h4>
+          <pre style="box-shadow: none;"><code class="stan">
+# 1.
+transformed parameters {}</code></pre>
+<pre style="box-shadow: none;"><code class="r">
+# 2.
+model.matrix(formula = ..., data = ...)
+poly(..., degree = ...)
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Darstellung von Unsicherheit</h3>
+          <p>Neben Unsicherheiten der Parameter ist man häufig an der Unsicherheit für neue Beobachtungen interessiert (Prädiktionsintervalle)</p>
+          <p>Im bayesianischen Kontext durch Simulationen aus der <strong>posterior predictive distribution (PPD)</strong> möglich</p></br>
+          <p>$p(\tilde{y}|\boldsymbol{y},I) = \int_{\theta \in \Theta} p(\tilde{y}|\theta,I)p(\theta|\boldsymbol{y},I) d\theta$</p>
+        </section>
+
+        <section>
+          <h3>Simulation der PPD</h3>
+          <h4>lineare Regression</h4>
+          <ol>
+            <li>Ziehen der Parameter $(\boldsymbol{\beta}^{(i)}, \sigma^{(i)})$ aus der Posterior, $i = 1, \ldots, K$ der Index der MCMC-Iteration</li>
+            <li>simuliere $\tilde{\boldsymbol{y}}|\boldsymbol{\beta}^{(i)}, \sigma^{(i)} \sim \mathrm{Normal}(\tilde{\boldsymbol{X}}\boldsymbol{\beta}^{(i)}, \sigma^{(i)})$ </li>
+            <li>Verwendung von $\tilde{\boldsymbol{y}}$ zur Modellevaluation:
+              <ul>
+                <li>Darstellung der PPD,</li>
+                <li>Berechnung und Gegenüberstellung von Teststatistiken $T(\tilde{\boldsymbol{y}})$ und $T(\boldsymbol{y})$.</br>(grafisch oder posterior predictive p-values)</li>
+              </ul>
+            </li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>Posterior vs. PPD</h3>
+          <h4>Modell: Übung 02</h4>
+          <img src="images/ppd_intro_posterior.png" width="33%" class="plain" style="margin-right: 10%"></img>
+          <img src="images/ppd_intro_ppd.png" width="33%" class="plain"></img>
+        </section>
+
+        <section>
+          <h3>Übung 03 (B)</h3>
+          <h4>Posterior Predictions</h4>
+          <ol style="font-size: 0.75em;">
+            <li><strong>[R]</strong> Simuliere die posterior predictive distribution für eine Person mit beliebigem Gewicht. Verwende dazu die posterior samples aus Übung 03 (A).</li>
+            <li><strong>[R]</strong> Definiere eine neue Variable $\tilde{\boldsymbol{x}}$ der Länge $\tilde{N}$ = 200, die den gesamten Wertebereich von <i>weight</i> abdeckt.</li>
+            <li><strong>[Stan]</strong> Adaptiere das Modell aus Übung 03 (A) so, dass für $\tilde{N}$ neue Personen mit Gewicht $\tilde{x}_i$ neue Werte $\tilde{y}_i$ aus der posterior predictive distribution simuliert werden. Berechne dann das Modell neu.</li>
+            <li><strong>[rstan, R]</strong> Stelle die PPD in Form eines Konfidenzbandes dar. Worin unterscheidet sich die Grafik zur Darstellung in Übung 02 4. (2)?</li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>Übung 03 (B)</h3>
+          <h4>Neue Funktionen</h4>
+          <pre style="box-shadow: none;"><code class="stan">
+# 1.
+rnorm(n, mu, sigma)
+
+# 2.
+seq(min, max, length.out)
+
+# 3.
+generated quantities {}
+real x = normal_rng(real mu, real sigma)
+</code></pre>
+        </section>
+
+        <section>
+          <h2>logistische Regression</h2>
+        </section>
+
+        <section>
+          <h3>Inhaltliche Überlegungen</h3>
+          <p>$\boldsymbol{y} \sim \mathrm{Bernoulli}(\boldsymbol{\theta}) \qquad i = 1,\ldots,N$</pi>
+          <p>$\boldsymbol{\theta} = \mathrm{logit}^{-1}(\boldsymbol{X\beta}) = \frac{\exp({\boldsymbol{X\beta})}}{1 + \exp({\boldsymbol{X\beta})}}$</p>
+          <p>$\boldsymbol{\beta} \sim \ldots$
+
+          <aside class="notes">
+            <p>Prior von beta wie in der linearen Regression!</p>
+          </aside>
+        </section>
+
+        <section data-background-image="images/toytanic.gif">
+          <h3>Anwendungsbeispiel</h3>
+          <h4>Überleben auf der Titanic</h4>
+        </section>
+
+        <section id="ue-04">
+          <h3>Übung 04</h3>
+          <h4>logistische Regression</h4>
+          <p style="font-size: 0.75em;">Verwende die Datensätze <i>titanic_training.csv</i> und <i>titanic_test.csv</i> um folgende Fragestellungen zu beantworten:</p>
+          <ol style="font-size: 0.75em;">
+            <li><strong>[R, rstan, Stan]</strong> <i>Frauen und Kinder zuerst!</i></br>Überprüfe anhand des Trainingdatensatzes, ob die geschätzte Überlebenswahrscheinlichkeit für Frauen und Kinder tatsächlich höher als für Männer ist.</li>
+            <li><strong>[R, rstan, Stan]</strong> Simuliere Werte aus der posterior predictive distribution um Überlebenswahrscheinlichkeiten für Personen im Testdatensatz zu bestimmen und diese als überlebende oder nicht überlebende Person zu klassifizieren.</li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>Übung 04</h3>
+          <h4>neue Funktionen</h4>
+          <pre style="box-shadow: none;"><code class="stan">
+# 1.
+int y ~ bernoulli(real inv_logit(x)) // oder besser
+int y ~ bernoulli_logit(real x)
+
+# 2.
+real y = inv_logit(real x)
+int  y = bernoulli_rng(real x) // x zwischen 0 und 1
+int  y = bernoulli_logit_rng(real x)
+</code></pre>
+        </section>
+
+        <section>
+          <h2>hierarchische Modelle</h2>
+        </section>
+
+        <section>
+          <h3>Anwendungsbeispiel</h3>
+          <h4>8 schools (bayesianische Metaanalyse)</h4>
+          <img src="images/05_8schools.png" width="75%" class="plain"></img>
+        </section>
+
+        <section id="ue-05">
+          <h3>Übung 05 (A)</h3>
+          <h4>Hierarchische Modelle</h4>
+          <ol style="font-size: 0.75em;">
+            <li><strong>[Stan, rstan]</strong> Schätze den durchschnittlichen Effekt aller Schulen unter der Annahme, dass die Effekte der Interventionen normalverteilt ist (<i>complete pooling</i>) und simuliere die vorhergesagten Effekte für jede Schule aus der PPD.</li>
+            <li><strong>[Stan, rstan]</strong> Schätze den Effekt für jede Schule getrennt unter identischen Verteilungsannahmen (<i>no pooling</i>) und simuliere die vorhergesagten Effekte für jede Schule aus der PPD.</li>
+            <li><strong>[R]</strong> Optional: Stelle die vorhergesagten Effekte grafisch dar.</li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>Einschub I: Modelldiagnose</h3>
+          <h4>Divergenz</h4>
+          <p>Divergenzen sind abhängig von der Parametrisierung des Modells und fast immer problematisch!</p>
+          <p>Sie führen zu Bias in den Parameterschätzungen.</p>
+          <p>Mehr Informationen <a href="http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup" target="_blank">hier</a> und <a href="http://mc-stan.org/users/documentation/case-studies/divergences_and_bias.html" target="_blank">hier</a>.</p>
+
+          <aside class="notes">
+            <p>Häufig in hierarchischen Modellen bzw. bei hierarchischen Varianzparametern (Funnel)</p>
+          </aside>
+        </section>
+
+        <section>
+          <h3>Einschub I: Modelldiagnose</h3>
+          <h4>Traceplots</h4>
+          <p>Darstellung von Parameterwerten je Iteration. </p>
+          <img src="images/traceplot_1.png" width="100%" class="plain"></img>
+          <img src="images/traceplot_2.png" width="100%" class="plain"></img>
+        </section>
+
+        <section>
+          <h3>Einschub I: Modelldiagnose</h3>
+          <h4>potential scale reduction factor ('Rhat')</h4>
+          <p>Maß für die Durchmischung der Markovketten</br>(siehe <a href="https://projecteuclid.org/download/pdf_1/euclid.ss/1177011136" target="_blank">Gelman & Rubin, 1992</a>)</p>
+          <p>Konvergenz der Markovketten bei Rhat = 1</p>
+          <p>Daumenregel: alle Rhat < 1.1</p>
+        </section>
+
+        <section>
+          <h3>Einschub I: Modelldiagnose</h3>
+          <h4>effective sample size (ESS)</h4>
+          <p>Schätzung der unabhängigen Samples aus den Markvovketten</p>
+          <p>geringe ESS $\implies$ hohe Autokorrelation</br>(= potentielles Problem)</p>
+          <p>Daumenregel: alle $\frac{ESS}{N}$ > 0.1</p>
+          <aside class="notes">
+            <p>MCMC samples sind abhängig!</p>
+          </aside>
+        </section>
+
+        <section>
+          <h3>Einschub II: Parametrisierung</h3>
+          <h4>zentriert vs. nicht-zentriert</h4>
+          <pre style="box-shadow: none;"><code class="stan" data-noescape><span class="fragment"># zentriert
+model {
+  theta ~ normal(mu, sigma_theta); # prior für theta
+  y ~ normal(theta, sigma);
+}</span>
+<span class="fragment">
+# nicht-zentriert
+transformed parameters {
+  theta = theta_norm*sigma_theta + mu;
+}
+model {
+  theta_norm ~ normal(0, 1);  # prior für theta_norm
+  y ~ normal(theta, sigma);
+}</span>
+</code></pre>
+        </section>
+
+        <section>
+          <h3>Inhaltliche Überlegungen</h3>
+          <h4>Zentrierte Parametrisierung</h4>
+          <p>$y_i \sim \mathrm{Normal}(\theta_i, \sigma_i), \qquad i = 1,\ldots,N$</p>
+          <p>$\theta_i \sim \mathrm{Normal}(\mu, \tau)$</p>
+          <p>$\mu \sim \mathrm{Normal}(0, 10)$</p>
+          <p>$\tau \sim \mathrm{Cauchy}_+(0, 5)$</p>
+        </section>
+
+        <section>
+          <h3>Inhaltliche Überlegungen</h3>
+          <h4>nicht-zentrierte Parametrisierung</h4>
+          <p>$y_i \sim \mathrm{Normal}(\theta_i, \sigma_i), \qquad i = 1,\ldots,N$</p>
+          <p>$\tilde{\theta}_i \sim \mathrm{Normal}(0, 1), \qquad \theta_i = \tilde{\theta}_i\tau + \mu$</p>
+          <p>$\mu \sim \mathrm{Normal}(0, 10)$</p>
+          <p>$\tau \sim \mathrm{Cauchy}_+(0, 5)$</p>
+        </section>
+
+        <section>
+          <h3>Übung 05 (B)</h3>
+          <h4>Hierarchische Modelle</h4>
+          <ol style="font-size: 0.75em;">
+            <li><strong>[Stan, rstan, shinystan]</strong> Schätze das hierarchische Modell mit Hilfe der zentrierten Parametrisierung und untersuche die divergenten Iterationen mit shinystan (tab DIAGNOSE). Betrachte dazu insbesondere den hierarchischen Varianzparameter $\tau$.</li>
+            <li><strong>[Stan, rstan, shinystan]</strong> Schätze das Modell mit nicht-zentrierter Parametrisierung. Wie verändern sich die divergenten Iterationen und die effektive Stichprobengröße der Modellparameter?</li>
+            <li><strong>[R, rstan]</strong> Wie groß ist die Wahrscheinlichkeit, dass die durchgeführte Interventionen im Mittel einen positiven Effekt auf die Testleistung der Schüler hat?</li>
+            <li><strong>[R, rstan]</strong> Berechne die PPD für die maximale Punkteanzahl der 8 Schulen. Wie plausibel ist es, dass ein Effekt größer 30 Punkten auftritt?</li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>Übung 05 (B)</h3>
+          <h4>neue Funktionen</h4>
+          <pre style="box-shadow: none;"><code class="stan" data-noescape>
+# 1., 2.
+shinystan::launch_shinystan()
+</code></pre>
+        </section>
+
+        <section>
+          <h3>Abschließende Anmerkungen</h3>
+          <h4>R Pakete</h4>
+          <p>Viele bayesianische Modelle (z.b. GLMs) können direkt in R in lm bzw. lme4 Syntax angepasst werden!</p>
+          <p style="font-size: 0.75em;">Pakete: rstanarm (<a href="https://github.com/stan-dev/rstanarm" target="_blank">link</a>), brms (<a href="https://github.com/paul-buerkner/brms" target="_blank">link</a>), ...</p>
+        </section>
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+        controls: false,
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+          { src: 'plugin/math/math.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+
+	</body>
+</html>
