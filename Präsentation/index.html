@@ -55,6 +55,7 @@
 
         <section>
           <h2>Bayesianische Inferenz</h2>
+          <img src="images/bayesplot.png" width="60%" class="plain"></img>
         </section>
 
         <section>
@@ -84,7 +85,6 @@
         <section>
           <h3>Was ist Stan?</h3>
           <div style="float: left; width: 65%">
-
             <ul>
               <li>probabilistische Programmiersprache</li>
               <li>Berechnung bayesianischer Modelle via Markov Chain Monte Carlo (Hamiltonian MC)</li>
@@ -240,7 +240,6 @@ model {<span class="fragment">
             <li><strong>[Stan]</strong> Erstelle ein Stan Programm (<i>nv.stan</i>), das sowohl den Erwartungswert $\mu$, als auch die Standardabweichung $\sigma$ schätzt.
             <li><strong>[R, rstan]</strong> Schätze das Modell und sieh dir die Parameterschätzungen an. Sind die wahren Parameter in den Posterior Intervallen enthalten?</li>
             <li><strong>[R, rstan]</strong> Generiere Daten aus der gleichen Verteilung wie in 1. jedoch mit N >> 100 und N << 100. Wie ändert sich die Posterior Verteilung für $\mu$ und $\sigma$?</li>
-            <li><strong>[Stan]</strong> Zusatz: Formuliere das Modell in vektorisierter Form. Welche Änderungen am Programm sind notwendig?</li>
           </ol>
         </section>
 
@@ -248,14 +247,8 @@ model {<span class="fragment">
           <h3>Übung 01</h3>
           <h4>Neue Funktionen</h4>
           <pre style="box-shadow: none;"><code class="stan">
-// einfache Form
-real x ~ normal(real mu, real sigma)
-
-// vektorisierte Form
-vector x ~ normal(vector mu, real sigma) // oder
-vector x ~ normal(real[] mu, real sigma) // oder
-real[] x ~ normal(vector mu, real sigma) // oder
-real[] x ~ normal(real[] mu, real sigma)
+x ~ normal(mu, sigma)                 // oder
+target += normal_lpdf(x | mu, sigma)
           </code></pre>
         </section>
         <section>
@@ -294,6 +287,7 @@ real[] x ~ normal(real[] mu, real sigma)
           <p>$\mathrm{Normal}(0, \lambda)$</p>
           <img src="images/normal_prior.png" class="plain"></img>
         </section>
+
         <section>
           <h3>Wahl des Priors für $\beta$</h3>
           <h4>'LASSO Regression'</h4>
@@ -387,7 +381,7 @@ rstan::extract()
           <pre style="box-shadow: none;"><code class="stan">
 # 1.
 transformed parameters {}</code></pre>
-          <pre style="box-shadow: none;"><code class="r">
+<pre style="box-shadow: none;"><code class="r">
 # 2.
 model.matrix(formula = ..., data = ...)
 poly(..., degree = ...)
@@ -465,19 +459,6 @@ real x = normal_rng(real mu, real sigma)
           </aside>
         </section>
 
-        <section>
-          <h3>Einschub: generische Prior Verteilungen</h3>
-          <ol>
-            <li>Skaliere kontinuierliche Prädiktoren:</br>$\mathrm{mean}(x) = 0$, $\mathrm{sd}(x) = 0.5$ </li>
-            <li>Wähle eine wenig informative Prior Verteilung:</br>(z.b.) $\mathrm{Cauchy}(0, 2.5), \qquad \mathrm{t}_{\nu}(0, 2.5)$</li>
-          </ol>
-          <p>Genauere Erläuterungen <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations" target="_blank">hier.</a></p>
-
-          <aside class="notes">
-            <p><strong>ad 1.</strong> Damit Skala etwa der von dummy-kodierten Variablen entspricht</p>
-          </aside>
-        </section>
-
         <section data-background-image="images/toytanic.gif">
           <h3>Anwendungsbeispiel</h3>
           <h4>Überleben auf der Titanic</h4>
@@ -530,8 +511,41 @@ int  y = bernoulli_logit_rng(real x)
 
         <section>
           <h3>Einschub I: Modelldiagnose</h3>
-          <p>noch ausständig...</p>
-          <p><a href="http://mc-stan.org/users/documentation/case-studies/divergences_and_bias.html" target="_blank">hier</a></p>
+          <h4>Divergenz</h4>
+          <p>Divergenzen sind abhängig von der Parametrisierung des Modells und fast immer problematisch!</p>
+          <p>Sie führen zu Bias in den Parameterschätzungen.</p>
+          <p>Mehr Informationen <a href="http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup" target="_blank">hier</a> und <a href="http://mc-stan.org/users/documentation/case-studies/divergences_and_bias.html" target="_blank">hier</a>.</p>
+
+          <aside class="notes">
+            <p>Häufig in hierarchischen Modellen bzw. bei hierarchischen Varianzparametern (Funnel)</p>
+          </aside>
+        </section>
+
+        <section>
+          <h3>Einschub I: Modelldiagnose</h3>
+          <h4>Traceplots</h4>
+          <p>Darstellung von Parameterwerten je Iteration. </p>
+          <img src="images/traceplot_1.png" width="100%" class="plain"></img>
+          <img src="images/traceplot_2.png" width="100%" class="plain"></img>
+        </section>
+
+        <section>
+          <h3>Einschub I: Modelldiagnose</h3>
+          <h4>potential scale reduction factor ('Rhat')</h4>
+          <p>Maß für die Durchmischung der Markovketten</br>(siehe <a href="https://projecteuclid.org/download/pdf_1/euclid.ss/1177011136" target="_blank">Gelman & Rubin, 1992</a>)</p>
+          <p>Konvergenz der Markovketten bei Rhat = 1</p>
+          <p>Daumenregel: alle Rhat < 1.1</p>
+        </section>
+
+        <section>
+          <h3>Einschub I: Modelldiagnose</h3>
+          <h4>effective sample size (ESS)</h4>
+          <p>Schätzung der unabhängigen Samples aus den Markvovketten</p>
+          <p>geringe ESS $\implies$ hohe Autokorrelation</br>(= potentielles Problem)</p>
+          <p>Daumenregel: alle $\frac{ESS}{N}$ > 0.1</p>
+          <aside class="notes">
+            <p>MCMC samples sind abhängig!</p>
+          </aside>
         </section>
 
         <section>
@@ -541,10 +555,10 @@ int  y = bernoulli_logit_rng(real x)
 model {
   theta ~ normal(mu, sigma_theta); # prior für theta
   y ~ normal(theta, sigma);
-}</span><span class="fragment">
+}</span>
+<span class="fragment">
 # nicht-zentriert
 transformed parameters {
-  vector theta_norm;
   theta = theta_norm*sigma_theta + mu;
 }
 model {
