@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>Stan Workshop 2017</title>
+		<title>reveal.js</title>
 
 		<link rel="stylesheet" href="css/reveal.css">
 		<link rel="stylesheet" href="css/theme/white.css">
@@ -28,7 +28,7 @@
 				<section>
           <h2>Workshop: Einführung in Stan und rstan</h2>
           <p>Philipp Gewessler</p>
-<!--          <p style="font-size: 0.6em;"><a href="philipp.gewessler@bmb.gv.at">philipp.gewessler@bmb.gv.at</a></p> -->
+          <p style="font-size: 0.85em;"><a href="https://github.com/p-gw/" target="_blank"><i class="fa fa-github"></i></a> <a href="mailto:philipp.gewessler@bmb.gv.at" style="margin-left: 20px;"><i class="fa fa-envelope" aria-hidden="true"></i></a></p>
         </section>
         <section>
           <h3>Inhalte des Workshops</h3>
@@ -79,28 +79,6 @@
         </section>
 
         <section>
-          <h3>Berechnung der Posterior</h3>
-          <ol>
-            <li>Analytisch <i class="fragment fa fa-close" style="color: red;"></i></li>
-            <li>Grid Approximation <i class="fragment fa fa-close" style="color: red;"></i></li>
-            <li>Quadratische Approximation <i class="fragment fa fa-close" style="color: red;"></i></li>
-            <li>Markov Chain Monte Carlo <i class="fragment fa fa-check" style="color: green;"></i></li>
-          </ol>
-          <aside class="notes">
-            <p>
-              <strong>ad 1.</strong> Begrenzte Modellwahl und oft abhängig von konjugierten Priors</br>
-              <strong>ad 2.</strong> Skaliert schlecht mit der Anzahl der Dimensionen; sehr rechenintensiv!</br>
-              <strong>ad 3.</strong> Nimmt normalverteilte Posterior an</br>
-              <strong>ad 4.</strong> Variable Wahl von Prior und Posterior; rechenintensiv
-            </p>
-          </aside>
-        </section>
-
-        <section>
-          <h3>Markov Chain Monte Carlo</h3>
-          <img src="images/mh_animation.gif" width="100%" class="plain"></img>
-        </section>
-        <section>
           <h2>Stan Grundlagen</h2>
         </section>
         <section>
@@ -109,7 +87,7 @@
 
             <ul>
               <li>probabilistische Programmiersprache</li>
-              <li>Berechnung bayesianischer Modelle via MCMC (HMC)</li>
+              <li>Berechnung bayesianischer Modelle via Markov Chain Monte Carlo (Hamiltonian MC)</li>
               <li>basiert auf C++ (schnell!)</li>
             </ul>
           </div>
@@ -120,11 +98,17 @@
         </section>
 
         <section>
+          <h3>Markov Chain Monte Carlo</h3>
+          <img src="images/mh_animation.gif" width="100%" class="plain"></img>
+        </section>
+
+
+        <section>
           <h3>Stan Workflow</h3>
           <ol>
             <li>Modell spezifizieren</li>
             <li>Modell kompilieren</li>
-            <li>Modell fitten</li>
+            <li>Posterior berechnen</li>
             <li>Modelldiagnose</li>
             <li>Analyse der Posterior | Ergebnisinterpretation</li>
           </ol>
@@ -207,14 +191,14 @@ generated quantities {
 # Stan laden
 library(rstan)
 
-# Multithreading aktivieren
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
 # Datenaufbereitung und Modellberechnung
-stan_data <- list(...)
+stan_data  <- list(...)
 stan_model <- stan_model("Mein_Modell.stan")
-stan_fit <- sampling(object = stan_model, data = stan_data)
+stan_fit   <- sampling(object = stan_model, data = stan_data)
+
 print(stan_fit)
           </code></pre>
         </section>
