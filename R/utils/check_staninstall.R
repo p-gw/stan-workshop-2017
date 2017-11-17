@@ -1,6 +1,6 @@
-check_staninstall <- function() {
+check_staninstall <- function(lib = NULL) {
   print("Überprüfe Installation...")
-  if (!require(rstan)) { stop("rstan ist nicht installiert!") }
+  if (!require(rstan, lib.loc = lib)) { stop("rstan ist nicht installiert!") }
 
   testmod <- "
     data { }
