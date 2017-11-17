@@ -1,13 +1,14 @@
 # Pakete laden
 library(rstan)
 library(ggplot2)
+library(data.table)
 
 # Multithreading aktivieren
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
 # Daten laden
-d <- read.csv("data/heights.csv")
+d <- fread("data/heights.csv")
 
 # 1.
 ols_fit <- lm(height ~ weight, data = d)
@@ -16,8 +17,8 @@ summary(ols_fit)
 # 2.
 stan_data <- list(
   "N"      = nrow(d),
-  "height" = d$height,
-  "weight" = d$weight
+  "height" = d[, height],
+  "weight" = d[, weight]
 )
 
 unif_fit <- stan(file = "models/0201_linreg.stan", data = stan_data)
@@ -34,12 +35,11 @@ nv_fit_l100 <- stan(file = "models/0202_linreg.stan", data = stan_data)
 
 # 4.
 n_samp <- 40
+samples <- sample(4000, n_samp)
 
 posterior_samples <- extract(nv_fit_l1)
 
-samples <- sample(4000, n_samp)
-
-pd_sim <- data.frame(
+pd_sim <- data.table(
   "sample"  = samples,
   "alpha"   = posterior_samples$alpha[samples],
   "beta"    = posterior_samples$beta[samples]

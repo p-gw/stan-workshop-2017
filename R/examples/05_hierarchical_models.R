@@ -60,7 +60,7 @@ print(p_np)
 # partial pooling model (centered)
 fit_ppc <- stan("models/0503_partial_pooling_central.stan", data = stan_data)
 
-launch_shinystan(fit_ppc)
+# launch_shinystan(fit_ppc)
 
 # partial pooling model (non-centered)
 fit_ppnc <- stan("models/0504_partial_pooling_noncentral.stan", data = stan_data)
