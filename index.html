@@ -39,6 +39,10 @@
             <li>Schnittstelle von R und Stan: rstan</li>
             <li>Erstes Anwendungsbeispiel</li>
           </ol>
+
+          <aside class="notes">
+            <p><strong>Dauer:</strong> ~ 1 Stunde</p>
+          </aside>
         </section>
 
         <section>
@@ -95,11 +99,32 @@
             <a href="https://en.wikipedia.org/wiki/Stanislaw_Ulam" target="_blank"><img src="images/stan_ulam.jpg" width="55%" class="plain"></img></a>
             <a href="http://hedibert.org/wp-content/uploads/2013/12/1949MetropolisUlam.pdf" target="_blank"><img src="images/metropolis_1949.png" width="100%" class="plain"></img></a>
           </div>
+          <aside class="notes">
+
+          </aside>
         </section>
 
         <section>
-          <h3>Markov Chain Monte Carlo</h3>
-          <img src="images/mh_animation.gif" width="100%" class="plain"></img>
+          <h3>Markov Chain Monte Carlo [1|2]</h3>
+            <p>Iteratives Verfahren zur Approximation der Posterior</p>
+            <p>Führe Folgendes in jeder Iteration $t$ durch:</p>
+            <ol>
+              <li>Ziehe ein $\theta^{*}$ ($t$ = 0: $\theta^*$ ein zufälliger Startwert)</li>
+              <li>Berechne $r = \frac{p(\theta^{*}|\boldsymbol{y})}{p(\theta^{t-1}|\boldsymbol{y})}$</li>
+              <li>Wähle $\theta^t = \theta^*$ mit Wahrscheinlichkeit min(1,$r$),</br> $\theta^{t-1}$ sonst.</li>
+            </ol>
+          <aside class="notes">
+            <p>Methoden unterscheiden sich zum Großteil darin, wie proposals gezogen werden</p>
+            <p>sampling von Parametern, nicht Daten!</p>
+          </aside>
+        </section>
+
+        <section>
+          <h3>Markov Chain Monte Carlo [2|2]</h3>
+          <img src="images/mh_algorithmus.png" width="100%" class="plain"></img>
+          <aside class="notes">
+            <p>'Finden' der Verteilung: Burn-in oder Warm-up</p>
+          </aside>
         </section>
 
 
@@ -180,27 +205,33 @@ generated quantities {
   real&lt;lower=0,upper=1&gt; p;
           </code></pre>
           und viele <a href="https://github.com/stan-dev/stan/releases/download/v2.16.0/stan-reference-2.16.0.pdf">mehr...</a>
+          <aside class="notes">
+            <p>Spezielle Typen = mathematische Effizienz</p>
+          </aside>
         </section>
 
         <section>
           <h2>Von R nach Stan</h2>
         </section>
+
         <section>
           <h3>Ein Stan Modell berechnen</h3>
           <pre style="box-shadow: none;"><code class="r">
-# Stan laden
 library(rstan)
 
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
-# Datenaufbereitung und Modellberechnung
 stan_data  <- list(...)
 stan_model <- stan_model("Mein_Modell.stan")
 stan_fit   <- sampling(object = stan_model, data = stan_data)
+stan_fit   <- stan(file, data) # = stan_model + sampling
 
 print(stan_fit)
           </code></pre>
+          <aside class="notes">
+            <p>Daten immer als <strong>benannte</strong> Liste!</br> Weitere Argumente für stan: chains, iter</br> Weitere Argumente für print: pars, probs</p>
+          </aside>
         </section>
 
         <section>
@@ -230,6 +261,10 @@ model {<span class="fragment">
     y[i] ~ bernoulli(theta);</span>
 }
           </code></pre>
+
+          <aside class="notes">
+            <p>Wenn keine Priors spezifiziert werden, dann ist er in Stan implizit gleichverteilt</p>
+          </aside>
         </section>
 
         <section id="ue-01">
@@ -247,8 +282,7 @@ model {<span class="fragment">
           <h3>Übung 01</h3>
           <h4>Neue Funktionen</h4>
           <pre style="box-shadow: none;"><code class="stan">
-x ~ normal(mu, sigma)                 // oder
-target += normal_lpdf(x | mu, sigma)
+x ~ normal(mu, sigma)
           </code></pre>
         </section>
         <section>
